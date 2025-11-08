@@ -6,7 +6,9 @@ import requests
 app = Flask(__name__)
 CORS(app)
 
-API_KEY = "d4cbf798420ef5b27990b8ea272670f2"
+import os
+API_KEY = os.getenv("API_KEY")
+
 
 def get_coordinates(country, state, district, village):
     query = f"{village}, {district}, {state}, {country}"
@@ -82,3 +84,4 @@ def get_weather():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
