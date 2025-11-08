@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🌾 AgriNauts Weather Intelligence</title>
+<style>
+/* ===== GLOBAL ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: "Poppins", sans-serif; }
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #00b09b, #96c93d);
+  transition: background 1s ease-in-out;
+  color: #fff;
+}
+
+/* ===== CONTAINER ===== */
+.container {
+  width: 90%;
+  max-width: 550px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 40px 30px;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 1s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(25px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== TITLE ===== */
+h1 {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  background: linear-gradient(90deg, #fff, #b6ffce);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+p {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: 20px;
+}
+
+/* ===== INPUTS ===== */
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  font-size: 1rem;
+  outline: none;
+  transition: background 0.3s;
+}
+input:focus { background: rgba(255, 255, 255, 0.35); }
+
+/* ===== BUTTON ===== */
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #11998e, #38ef7d);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+button:hover { background: linear-gradient(90deg, #38ef7d, #11998e); }
+
+/* ===== RESULTS ===== */
+#result {
+  margin-top: 25px;
+  text-align: left;
+}
+.day {
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+  transition: transform 0.3s ease;
+}
+.day:hover { transform: scale(1.02); }
+.day h3 {
+  color: #fff;
+  margin-bottom: 8px;
+}
+.icon {
+  width: 30px;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+/* ===== FOOTER ===== */
+footer {
+  margin-top: 25px;
+  text-align: center;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  color: #f0fff0;
+}
+footer b { color: #b6ffce; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🌾 AgriNauts Weather</h1>
+  <p>Get accurate 5-day forecasts by location</p>
+
+  <input id="country" placeholder="Country (e.g., India)" />
+  <input id="state" placeholder="State (e.g., Karnataka)" />
+  <input id="district" placeholder="District (e.g., Bengaluru Urban)" />
+  <input id="village" placeholder="Village (e.g., Electronic City)" />
+  <button onclick="fetchWeather()">Check Forecast</button>
+
+  <div id="result"></div>
+  <footer>
+    Developed by <b>AgriNauts</b> <br> Powered by <b>NLR GROUP OF COMPANY</b>
+  </footer>
+</div>
+
+<script>
+const BACKEND_URL = "http://127.0.0.1:5000/get_weather"; // change to your backend URL
+
+// ===== BACKGROUND GRADIENTS BY DAY =====
+const dayBackgrounds = [
+  "linear-gradient(135deg, #00b09b, #96c93d)", // Sun
+  "linear-gradient(135deg, #43cea2, #185a9d)", // Mon
+  "linear-gradient(135deg, #FFB75E, #ED8F03)", // Tue
+  "linear-gradient(135deg, #4776E6, #8E54E9)", // Wed
+  "linear-gradient(135deg, #6a11cb, #2575fc)", // Thu
+  "linear-gradient(135deg, #fc4a1a, #f7b733)", // Fri
+  "linear-gradient(135deg, #00c6ff, #0072ff)"  // Sat
+];
+document.body.style.background = dayBackgrounds[new Date().getDay()];
+
+// ===== FETCH WEATHER =====
+async function fetchWeather() {
+  const country = document.getElementById("country").value.trim();
+  const state = document.getElementById("state").value.trim();
+  const district = document.getElementById("district").value.trim();
+  const village = document.getElementById("village").value.trim();
+  const result = document.getElementById("result");
+  result.innerHTML = "<p>🔄 Fetching live forecast...</p>";
+
+  try {
+    const res = await fetch(BACKEND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country, state, district, village }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      result.innerHTML = `<p style="color:#ffcccc">❌ ${data.error || "Something went wrong!"}</p>`;
+      return;
+    }
+
+    let html = `<h2 style="margin-bottom:10px;">🌦️ 5-Day Forecast</h2>`;
+    const icons = {
+      "clear": "☀️", "rain": "🌧️", "cloud": "☁️", "drizzle": "🌦️", "thunderstorm": "⛈️", "snow": "❄️"
+    };
+
+for (const [date, info] of Object.entries(data.forecast)) {
+  const condition = info.condition.toLowerCase();
+  const icon = Object.keys(icons).find(key => condition.includes(key)) || "clear";
+  html += `
+    <div class="day">
+      <h3>${icons[icon]} ${new Date(date).toDateString()}</h3>
+      <p>🌡️ Avg Temp: <b>${info.avg_temp}°C</b> (Max: ${info.max_temp}°C / Min: ${info.min_temp}°C)</p>
+      <p>💧 Humidity: ${info.humidity}%</p>
+      <p>🌬️ Wind: ${info.wind_speed} m/s</p>
+      <p>☁️ Condition: ${info.condition}</p>
+      <p>🌧️ Rainfall Probability: <b>${info.rain_chance}%</b></p>
+    </div>`;
+}
+
+    result.innerHTML = html;
+  } catch (error) {
+    result.innerHTML = `<p style="color:#ffcccc">⚠️ Unable to connect to backend.</p>`;
+    console.error(error);
+  }
+}
+</script>
+</body>
+</html>
